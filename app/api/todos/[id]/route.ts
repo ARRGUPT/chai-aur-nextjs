@@ -1,5 +1,4 @@
 import { prisma } from "@/lib/db";
-import { Param } from "@prisma/client/runtime/client";
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
@@ -41,6 +40,17 @@ export async function PATCH(
     const body = await request.json();
     const { title, completed } = body;
 
+    const existingTodo = await prisma.todo.findUnique({
+      where: { id },
+    });
+
+    if (!existingTodo) {
+      return NextResponse.json(
+        { success: false, error: "Todo not found" },
+        { status: 404 },
+      );
+    }
+
     const todo = await prisma.todo.update({
       where: { id },
       data: {
@@ -51,6 +61,7 @@ export async function PATCH(
 
     return NextResponse.json({ success: true, data: todo }, { status: 200 });
   } catch (error) {
+    console.error("Failed to update todo", error);
     return NextResponse.json(
       { success: false, error: "Failed to update todo" },
       { status: 500 },
@@ -59,19 +70,26 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  request: NextRequest,
+  _request: NextRequest,
   { params }: { params: Promise<{ id: string }> },
 ) {
   try {
     const { id } = await params;
 
-    await prisma.todo.delete({
+    const result = await prisma.todo.deleteMany({
       where: { id },
     });
 
+    if (result.count === 0) {
+      return NextResponse.json(
+        { success: false, error: "Todo not found" },
+        { status: 404 },
+      );
+    }
+
     return NextResponse.json({ success: true }, { status: 200 });
   } catch (error) {
-    console.log(error);
+    console.error("Failed to delete todo", error);
     return NextResponse.json(
       { success: false, error: "Failed to delete todo" },
       { status: 500 },

@@ -1,7 +1,6 @@
 import React from "react";
 
-// @ts-ignore
-const Authlayout = ({ children }) => {
+const Authlayout = ({ children }: { children: React.ReactNode }) => {
   return (
     <>
       <h1>Authlayout</h1>
